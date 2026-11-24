@@ -5,7 +5,8 @@ using UnityEngine;
 // Seguidor de rutas baseado en waypoints usando A* para calcular camiños
 // Os métodos GotoX chamarrán o AStar no grafo para poboar `graph.pathList` e logo o obxecto
 // moverase seguindo eses puntos en LateUpdate.
-public class TanksWaypointsFollow : MonoBehaviour {
+public class TanksWaypointsFollow : MonoBehaviour
+{
 
     // =============================================================================
     // REFERENCIAS E ESTADO
@@ -42,7 +43,8 @@ public class TanksWaypointsFollow : MonoBehaviour {
     // INICIALIZACIÓN
     // =============================================================================
     // Configuración inicial: obtemos referencia aos waypoints e ao grafo desde o manager
-    void Start() {
+    void Start()
+    {
         // Nota: neste exemplo aceleramos o tempo para que a simulación vaia máis rápido
         Time.timeScale = 5.0f;
 
@@ -67,26 +69,37 @@ public class TanksWaypointsFollow : MonoBehaviour {
     // a seguir a ruta dende o principio.
 
     // Ir ao helicóptero (waypoint 0)
-    public void GotoHeli() {
+    public void GotoHeli()
+    {
         graph.AStar(currentNode, waypoints[0]);
         currentWP = 0;
     }
 
     // Ir ás ruínas (waypoint 7)
-    public void GotoRuin() {
+    public void GotoRuin()
+    {
         graph.AStar(currentNode, waypoints[7]);
         currentWP = 0;
     }
 
     // Ir á rocha (waypoint 1)
-    public void GotoRock() {
+    public void GotoRock()
+    {
         graph.AStar(currentNode, waypoints[1]);
         currentWP = 0;
     }
 
     // Ir á fábrica (waypoint 4)
-    public void GotoFactory() {
+    public void GotoFactory()
+    {
         graph.AStar(currentNode, waypoints[4]);
+        currentWP = 0;
+    }
+
+    // Ir ao posto norte (waypoint 8)
+    public void GotoPostoNorte()
+    {
+        graph.AStar(currentNode, waypoints[8]);
         currentWP = 0;
     }
 
@@ -95,7 +108,8 @@ public class TanksWaypointsFollow : MonoBehaviour {
     // =============================================================================
     // LateUpdate move o obxecto seguindo os puntos xerados por A* (graph.pathList).
     // Compróbase a distancia ao punto actual; se se alcanza, avanzamos ao seguinte.
-    void LateUpdate() {
+    void LateUpdate()
+    {
 
         // Se non hai ruta calculada ou xerstamos o final da ruta, saímos
         if (graph.pathList.Count == 0 || currentWP == graph.pathList.Count) return;
@@ -103,13 +117,43 @@ public class TanksWaypointsFollow : MonoBehaviour {
         // Actualizar nodo actual segundo o índice da ruta
         currentNode = graph.getPathPoint(currentWP);
 
+        // No último waypoint, chegar ao centro do marcador mantendo a altura do tanque
+        if (currentWP == graph.pathList.Count - 1)
+        {
+            Vector3 destino = currentNode.transform.position;
+            destino.y = transform.position.y;
+
+            Vector3 direccion = destino - transform.position;
+            if (direccion.sqrMagnitude > 0.0001f)
+            {
+                transform.rotation = Quaternion.Slerp(
+                    transform.rotation,
+                    Quaternion.LookRotation(direccion),
+                    rotSpeed * Time.deltaTime);
+            }
+
+            // Limitar o paso á distancia que queda para parar xusto no destino
+            Vector3 seguinte = Vector3.MoveTowards(
+                transform.position, destino, speed * Time.deltaTime);
+            transform.position = seguinte;
+
+            if (seguinte.Equals(destino))
+            {
+                currentWP++;
+            }
+
+            return;
+        }
+
         // Se estamos preto do waypoint actual, avanzar ao seguinte
-        if (Vector3.Distance(graph.pathList[currentWP].getID().transform.position, transform.position) < accuracy) {
+        if (Vector3.Distance(graph.pathList[currentWP].getID().transform.position, transform.position) < accuracy)
+        {
             currentWP++;
         }
 
         // Se aínda hai puntos por visitar na ruta
-        if (currentWP < graph.pathList.Count) {
+        if (currentWP < graph.pathList.Count)
+        {
 
             // Establecer obxectivo actual como o transform do waypoint
             goal = graph.pathList[currentWP].getID().transform;
